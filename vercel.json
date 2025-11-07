@@ -1,0 +1,13 @@
+{
+  "rewrites": [
+    {
+      "source": "/iclock/cdata",
+      "destination": "/api/adms/cdata"
+    },
+    {
+      "source": "/iclock/getrequest",
+      "destination": "/api/adms/getrequest"
+    }
+  ]
+}
+
