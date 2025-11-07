@@ -187,6 +187,39 @@ export default function DeviceSetupInstructions() {
           </CardContent>
         </Card>
 
+        {/* Device Requirements */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Device Requirements</CardTitle>
+            <CardDescription>
+              Important information about device communication
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <p className="font-medium text-sm mb-1">HTTP Support</p>
+              <p className="text-sm text-gray-600">
+                These devices only support <strong>HTTP</strong> (not HTTPS) unless patched. 
+                Your server must:
+              </p>
+              <ul className="text-sm text-gray-600 list-disc list-inside space-y-1 ml-2 mt-2">
+                <li>Accept HTTP POST/GET requests</li>
+                <li>Require no authentication</li>
+                <li>Return plain text responses</li>
+                <li>Always respond with status 200 OK</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-medium text-sm mb-1">Server Configuration</p>
+              <p className="text-sm text-gray-600">
+                The server endpoints are configured to meet these requirements. 
+                Device endpoints (<code className="bg-gray-100 px-1 rounded">/iclock/cdata</code> and <code className="bg-gray-100 px-1 rounded">/iclock/getrequest</code>) 
+                are publicly accessible and always return plain text &quot;OK&quot; responses.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Device Registration */}
         <Card>
           <CardHeader>
@@ -236,14 +269,16 @@ export default function DeviceSetupInstructions() {
                 <li>Check that Push Mode is enabled</li>
                 <li>Restart the device</li>
                 <li>Check device logs for connection errors</li>
+                <li><strong>Note:</strong> Devices support HTTP (not HTTPS) unless patched. Ensure your server accepts HTTP connections.</li>
               </ul>
             </div>
             <div>
               <p className="font-medium text-sm mb-1">Device shows as offline</p>
               <ul className="text-sm text-gray-600 list-disc list-inside space-y-1 ml-2">
                 <li>Check network connectivity</li>
-                <li>Verify firewall settings allow outbound HTTPS connections</li>
+                <li>Verify firewall settings allow outbound HTTP/HTTPS connections</li>
                 <li>Check if the server URL is accessible from the device</li>
+                <li><strong>Important:</strong> Devices only support HTTP (not HTTPS) unless patched. Your server must accept HTTP connections.</li>
               </ul>
             </div>
             <div>

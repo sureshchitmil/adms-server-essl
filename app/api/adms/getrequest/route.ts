@@ -9,8 +9,15 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const deviceSN = searchParams.get('SN');
 
+    // Always return OK even if SN is missing (devices expect 200 OK)
     if (!deviceSN) {
-      return new NextResponse('SN parameter required', { status: 400 });
+      console.warn('[getrequest] Missing SN parameter');
+      return new NextResponse('OK', {
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
     }
 
     const supabase = createServiceClient();
@@ -52,7 +59,13 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error processing getrequest:', error);
-    return new NextResponse('Error processing request', { status: 500 });
+    // Always return OK to prevent device retries
+    return new NextResponse('OK', {
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
   }
 }
 

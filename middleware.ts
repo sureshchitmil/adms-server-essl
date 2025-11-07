@@ -57,6 +57,12 @@ export async function middleware(request: NextRequest) {
   // Refresh session if expired
   await supabase.auth.getUser();
 
+  // Skip authentication for device endpoints (they only support HTTP, no auth)
+  if (request.nextUrl.pathname.startsWith('/api/adms/') || 
+      request.nextUrl.pathname.startsWith('/iclock/')) {
+    return response;
+  }
+
   // Protect dashboard routes
   if (request.nextUrl.pathname.startsWith('/dashboard')) {
     const {

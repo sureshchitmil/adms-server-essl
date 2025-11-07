@@ -10,8 +10,15 @@ export async function POST(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const deviceSN = searchParams.get('SN');
 
+    // Always return OK even if SN is missing (devices expect 200 OK)
     if (!deviceSN) {
-      return new NextResponse('SN parameter required', { status: 400 });
+      console.warn('[cdata] Missing SN parameter');
+      return new NextResponse('OK', { 
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
     }
 
     // Get raw text body
@@ -43,7 +50,12 @@ export async function POST(request: NextRequest) {
     }
     
     if (!body || body.trim() === '') {
-      return new NextResponse('OK', { status: 200 });
+      return new NextResponse('OK', { 
+        status: 200,
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+      });
     }
 
     // Parse the data - lines are separated by \n, fields by \t
@@ -341,12 +353,22 @@ export async function POST(request: NextRequest) {
 
     // Always return OK to device even if some records failed
     // This prevents devices from retrying and creating duplicates
-    return new NextResponse('OK', { status: 200 });
+    return new NextResponse('OK', { 
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
   } catch (error: any) {
     console.error('Error processing cdata:', error);
-    // Still return OK to prevent device retries
+    // Always return OK to prevent device retries
     // Log the error for debugging
-    return new NextResponse('OK', { status: 200 });
+    return new NextResponse('OK', { 
+      status: 200,
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    });
   }
 }
 
