@@ -34,9 +34,9 @@ export async function POST(request: NextRequest) {
     const errors: string[] = [];
 
     for (const line of lines) {
+      const trimmedLine = line.trim();
+      
       try {
-        const trimmedLine = line.trim();
-        
         // Handle command acknowledgment: OK <CommandID>
         if (trimmedLine.startsWith('OK ')) {
           const commandIdMatch = trimmedLine.match(/OK\s+(\d+)/);
