@@ -104,6 +104,57 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
     await sendCommand(deviceSN, 'DATA QUERY ATTLOG StartTime=2000-00-00 00:00:00');
   };
 
+  const handleSyncAllData = async (deviceSN: string, device: Device) => {
+    if (!confirm('This will sync all historical data from the device. This may take several minutes. Continue?')) {
+      return;
+    }
+
+    const commands = [
+      'DATA QUERY ATTLOG StartTime=2000-00-00 00:00:00', // Sync all attendance logs
+      'DATA QUERY USER', // Sync all employees/users
+    ];
+
+    // Add biometric sync commands based on device capabilities
+    if (device.supports_finger) {
+      commands.push('DATA QUERY FP'); // Sync all fingerprints
+    }
+    if (device.supports_face) {
+      commands.push('DATA QUERY FACE'); // Sync all faces
+    }
+
+    // Send all commands
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const command of commands) {
+      try {
+        const { error } = await supabase
+          .from('pending_commands')
+          .insert({
+            device_sn: deviceSN,
+            command_string: command,
+            status: 'pending',
+          });
+
+        if (error) {
+          console.error(`Error sending command "${command}":`, error);
+          errorCount++;
+        } else {
+          successCount++;
+        }
+      } catch (error: any) {
+        console.error(`Error sending command "${command}":`, error);
+        errorCount++;
+      }
+    }
+
+    if (errorCount === 0) {
+      alert(`Successfully queued ${successCount} sync command(s). The device will process them when it polls for commands.`);
+    } else {
+      alert(`Queued ${successCount} command(s), but ${errorCount} failed. Please try again.`);
+    }
+  };
+
   const handleAddDevice = async () => {
     if (!serialNumber.trim()) {
       alert('Please enter a serial number');
@@ -112,30 +163,29 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
 
     setIsAdding(true);
     try {
-      const { data, error } = await supabase
-        .from('devices')
-        .insert({
+      const response = await fetch('/api/v1/devices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           serial_number: serialNumber.trim(),
           name: deviceName.trim() || null,
-          last_seen: new Date().toISOString(),
-        })
-        .select()
-        .single();
+        }),
+      });
 
-      if (error) {
-        if (error.code === '23505') {
-          // Unique constraint violation
-          alert('A device with this serial number already exists');
-        } else {
-          alert('Error adding device: ' + error.message);
-        }
-      } else {
-        // Device added successfully
-        setDevices((prev) => [...prev, data as Device]);
-        setIsAddDialogOpen(false);
-        setSerialNumber('');
-        setDeviceName('');
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || 'Error adding device');
+        return;
       }
+
+      // Device added successfully
+      setDevices((prev) => [...prev, result.data as Device]);
+      setIsAddDialogOpen(false);
+      setSerialNumber('');
+      setDeviceName('');
     } catch (error: any) {
       alert('Error adding device: ' + error.message);
     } finally {
@@ -215,18 +265,33 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={() => handleSyncAllData(device.serial_number, device)}
+                      className="flex-1 min-w-[140px]"
+                    >
+                      Sync All Data
+                    </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" size="sm">
-                          Send Command
+                          More Commands
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuItem
                           onClick={() => handleManualSync(device.serial_number)}
                         >
-                          Manual Sync (ATTLOG)
+                          Sync Attendance Only
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            sendCommand(device.serial_number, 'DATA QUERY USER')
+                          }
+                        >
+                          Sync Employees Only
                         </DropdownMenuItem>
                         {device.supports_face && (
                           <DropdownMenuItem
@@ -234,7 +299,7 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
                               sendCommand(device.serial_number, 'DATA QUERY FACE')
                             }
                           >
-                            Sync All Faces
+                            Sync Faces Only
                           </DropdownMenuItem>
                         )}
                         {device.supports_finger && (
@@ -243,16 +308,9 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
                               sendCommand(device.serial_number, 'DATA QUERY FP')
                             }
                           >
-                            Sync All Fingerprints
+                            Sync Fingerprints Only
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem
-                          onClick={() =>
-                            sendCommand(device.serial_number, 'DATA QUERY USER')
-                          }
-                        >
-                          Sync All Users
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
                             sendCommand(device.serial_number, 'CLEAR ATTLOG')
@@ -269,13 +327,6 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleManualSync(device.serial_number)}
-                    >
-                      Manual Sync
-                    </Button>
                   </div>
                 </div>
               </CardContent>

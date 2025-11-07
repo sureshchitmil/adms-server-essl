@@ -14,6 +14,7 @@ import {
   X,
   Settings,
   BookOpen,
+  Terminal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Devices', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Employees', href: '/dashboard/employees', icon: Users },
   { name: 'Attendance', href: '/dashboard/attendance', icon: Clock },
+  { name: 'Logs & Console', href: '/dashboard/logs', icon: Terminal },
   { name: 'API Keys', href: '/dashboard/api-keys', icon: Key },
   { name: 'Device Setup', href: '/dashboard/device-setup', icon: Settings },
   { name: 'API Docs', href: '/dashboard/api-docs', icon: BookOpen },
