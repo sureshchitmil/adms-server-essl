@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Fingerprint, User, Radio, Wifi, WifiOff, Plus } from 'lucide-react';
+import { Fingerprint, User, Radio, Wifi, WifiOff, Plus, Circle } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Device {
@@ -45,7 +45,17 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
   const [serialNumber, setSerialNumber] = useState('');
   const [deviceName, setDeviceName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const supabase = createClient();
+
+  // Update current time every second for real-time status updates
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     // Subscribe to device changes
@@ -82,6 +92,54 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
     const now = new Date();
     const diffMinutes = (now.getTime() - lastSeenDate.getTime()) / 1000 / 60;
     return diffMinutes < 5; // Consider online if last seen within 5 minutes
+  };
+
+  const getConnectionStatus = (lastSeen: string) => {
+    const lastSeenDate = new Date(lastSeen);
+    const now = new Date();
+    const diffMs = now.getTime() - lastSeenDate.getTime();
+    const diffSeconds = Math.floor(diffMs / 1000);
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const diffHours = Math.floor(diffMinutes / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    const isOnline = diffMinutes < 5;
+
+    let statusText: string;
+    let statusColor: string;
+    let statusBadge: string;
+
+    if (isOnline) {
+      if (diffSeconds < 60) {
+        statusText = 'Connected now';
+        statusColor = 'text-green-600';
+        statusBadge = 'bg-green-100 text-green-800';
+      } else if (diffMinutes < 1) {
+        statusText = `Connected ${diffSeconds}s ago`;
+        statusColor = 'text-green-600';
+        statusBadge = 'bg-green-100 text-green-800';
+      } else {
+        statusText = `Connected ${diffMinutes}m ago`;
+        statusColor = 'text-green-600';
+        statusBadge = 'bg-green-100 text-green-800';
+      }
+    } else {
+      if (diffMinutes < 60) {
+        statusText = `Offline ${diffMinutes}m ago`;
+        statusColor = 'text-gray-500';
+        statusBadge = 'bg-gray-100 text-gray-800';
+      } else if (diffHours < 24) {
+        statusText = `Offline ${diffHours}h ago`;
+        statusColor = 'text-orange-600';
+        statusBadge = 'bg-orange-100 text-orange-800';
+      } else {
+        statusText = `Offline ${diffDays}d ago`;
+        statusColor = 'text-red-600';
+        statusBadge = 'bg-red-100 text-red-800';
+      }
+    }
+
+    return { isOnline, statusText, statusColor, statusBadge };
   };
 
   const sendCommand = async (deviceSN: string, command: string) => {
@@ -209,28 +267,45 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {devices.map((device) => {
-          const online = isOnline(device.last_seen);
+          const connectionStatus = getConnectionStatus(device.last_seen);
           return (
             <Card key={device.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{device.name || device.serial_number}</CardTitle>
                   <div className="flex items-center gap-2">
-                    {online ? (
-                      <Wifi className="h-5 w-5 text-green-500" />
+                    {connectionStatus.isOnline ? (
+                      <div className="relative">
+                        <Wifi className="h-5 w-5 text-green-500" />
+                        <Circle className="h-2 w-2 text-green-500 absolute -top-0.5 -right-0.5 animate-pulse fill-green-500" />
+                      </div>
                     ) : (
                       <WifiOff className="h-5 w-5 text-gray-400" />
                     )}
-                    <span className={`text-sm ${online ? 'text-green-600' : 'text-gray-500'}`}>
-                      {online ? 'Online' : 'Offline'}
+                    <span className={`text-sm font-medium ${connectionStatus.statusColor}`}>
+                      {connectionStatus.isOnline ? 'Online' : 'Offline'}
                     </span>
                   </div>
                 </div>
                 <CardDescription>SN: {device.serial_number}</CardDescription>
+                <div className="mt-2">
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${connectionStatus.statusBadge}`}>
+                    {connectionStatus.statusText}
+                  </span>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Connection Status</p>
+                      {connectionStatus.isOnline && (
+                        <span className="inline-flex items-center gap-1">
+                          <Circle className="h-2 w-2 text-green-500 fill-green-500 animate-pulse" />
+                          <span className="text-xs text-green-600 font-medium">Live</span>
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-600">
                       Last Seen: {format(new Date(device.last_seen), 'PPpp')}
                     </p>
