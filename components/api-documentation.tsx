@@ -387,7 +387,7 @@ export default function ApiDocumentation() {
 }`}</code>
               </pre>
               <p className="text-sm text-gray-600 mt-2">
-                Returned when requested resource doesn't exist
+                Returned when requested resource doesn&apos;t exist
               </p>
             </div>
 
