@@ -17,24 +17,49 @@ export async function POST(request: NextRequest) {
     // Get raw text body
     const body = await request.text();
     
+    // Log incoming request for debugging
+    console.log(`[cdata] Device SN: ${deviceSN}`);
+    console.log(`[cdata] Body length: ${body.length}`);
+    if (body.length > 0) {
+      console.log(`[cdata] Body preview: ${body.substring(0, 200)}`);
+    }
+    
+    // Even if body is empty, ensure device is registered
+    const supabase = createServiceClient();
+    const { error: upsertError } = await supabase
+      .from('devices')
+      .upsert({
+        serial_number: deviceSN,
+        last_seen: new Date().toISOString(),
+      }, {
+        onConflict: 'serial_number',
+      });
+    
+    if (upsertError) {
+      console.error(`[cdata] Failed to upsert device ${deviceSN}:`, upsertError);
+      // Still return OK to prevent device retries, but log the error
+    } else {
+      console.log(`[cdata] Successfully registered/updated device ${deviceSN}`);
+    }
+    
     if (!body || body.trim() === '') {
       return new NextResponse('OK', { status: 200 });
     }
-
-    const supabase = createServiceClient();
-
-    // Update device last_seen timestamp
-    await supabase
-      .from('devices')
-      .update({ last_seen: new Date().toISOString() })
-      .eq('serial_number', deviceSN);
 
     // Parse the data - lines are separated by \n, fields by \t
     const lines = body.split('\n').filter(line => line.trim() !== '');
     const errors: string[] = [];
 
+    if (lines.length > 0) {
+      console.log(`[cdata] Processing ${lines.length} lines`);
+    }
+
     for (const line of lines) {
       const trimmedLine = line.trim();
+      
+      if (trimmedLine.length > 0) {
+        console.log(`[cdata] Processing line: ${trimmedLine.substring(0, 100)}`);
+      }
       
       try {
         // Handle command acknowledgment: OK <CommandID>
