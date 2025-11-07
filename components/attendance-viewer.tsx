@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import {
   Table,
@@ -205,10 +206,13 @@ export default function AttendanceViewer({ initialLogs }: AttendanceViewerProps)
           </DialogHeader>
           {photoUrl ? (
             <div className="flex justify-center">
-              <img
+              <Image
                 src={photoUrl}
                 alt="Attendance photo"
-                className="max-h-[500px] rounded-lg"
+                width={800}
+                height={600}
+                className="max-h-[500px] w-auto rounded-lg"
+                unoptimized
               />
             </div>
           ) : (

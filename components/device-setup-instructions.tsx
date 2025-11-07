@@ -191,7 +191,7 @@ export default function DeviceSetupInstructions() {
             <div>
               <p className="font-medium text-sm mb-1">Heartbeat</p>
               <p className="text-sm text-gray-600">
-                The device sends a heartbeat every few minutes to indicate it's online. 
+                The device sends a heartbeat every few minutes to indicate it&apos;s online. 
                 Devices are considered offline if no heartbeat is received for 5 minutes.
               </p>
             </div>
@@ -199,7 +199,7 @@ export default function DeviceSetupInstructions() {
               <p className="font-medium text-sm mb-1">Data Synchronization</p>
               <p className="text-sm text-gray-600">
                 Attendance logs are pushed immediately when an employee punches in. 
-                You can also manually sync all data using the "Manual Sync" button on the device card.
+                You can also manually sync all data using the &quot;Manual Sync&quot; button on the device card.
               </p>
             </div>
           </CardContent>
@@ -234,7 +234,7 @@ export default function DeviceSetupInstructions() {
             <div>
               <p className="font-medium text-sm mb-1">Data not syncing</p>
               <ul className="text-sm text-gray-600 list-disc list-inside space-y-1 ml-2">
-                <li>Use "Manual Sync" button to force synchronization</li>
+                <li>Use &quot;Manual Sync&quot; button to force synchronization</li>
                 <li>Check device storage capacity</li>
                 <li>Verify device is online</li>
               </ul>
