@@ -10,7 +10,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Fingerprint, User, Radio, Wifi, WifiOff } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Fingerprint, User, Radio, Wifi, WifiOff, Plus } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Device {
@@ -31,6 +41,10 @@ interface DeviceDashboardProps {
 
 export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps) {
   const [devices, setDevices] = useState<Device[]>(initialDevices);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [serialNumber, setSerialNumber] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
   const supabase = createClient();
 
   useEffect(() => {
@@ -90,13 +104,58 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
     await sendCommand(deviceSN, 'DATA QUERY ATTLOG StartTime=2000-00-00 00:00:00');
   };
 
+  const handleAddDevice = async () => {
+    if (!serialNumber.trim()) {
+      alert('Please enter a serial number');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const { data, error } = await supabase
+        .from('devices')
+        .insert({
+          serial_number: serialNumber.trim(),
+          name: deviceName.trim() || null,
+          last_seen: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === '23505') {
+          // Unique constraint violation
+          alert('A device with this serial number already exists');
+        } else {
+          alert('Error adding device: ' + error.message);
+        }
+      } else {
+        // Device added successfully
+        setDevices((prev) => [...prev, data as Device]);
+        setIsAddDialogOpen(false);
+        setSerialNumber('');
+        setDeviceName('');
+      }
+    } catch (error: any) {
+      alert('Error adding device: ' + error.message);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Devices</h1>
-        <p className="mt-2 text-sm text-gray-600">
-          Manage and monitor your biometric devices
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Devices</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Manage and monitor your biometric devices
+          </p>
+        </div>
+        <Button onClick={() => setIsAddDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Device
+        </Button>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {devices.map((device) => {
@@ -228,10 +287,74 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
         <div className="text-center py-12">
           <p className="text-gray-500">No devices registered yet.</p>
           <p className="text-sm text-gray-400 mt-2">
-            Devices will appear here when they connect for the first time.
+            Devices will appear here when they connect for the first time, or you can add one manually.
           </p>
         </div>
       )}
+
+      {/* Add Device Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Device Manually</DialogTitle>
+            <DialogDescription>
+              Add a device by entering its serial number. The device will appear in the list once added.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="serial-number">Serial Number *</Label>
+              <Input
+                id="serial-number"
+                placeholder="Enter device serial number"
+                value={serialNumber}
+                onChange={(e) => setSerialNumber(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isAdding) {
+                    handleAddDevice();
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500">
+                The serial number is usually found on the device label or in device settings.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="device-name">Device Name (Optional)</Label>
+              <Input
+                id="device-name"
+                placeholder="e.g., Main Entrance, Office Floor 1"
+                value={deviceName}
+                onChange={(e) => setDeviceName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !isAdding) {
+                    handleAddDevice();
+                  }
+                }}
+              />
+              <p className="text-xs text-gray-500">
+                A friendly name to identify this device. If not provided, the serial number will be used.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsAddDialogOpen(false);
+                setSerialNumber('');
+                setDeviceName('');
+              }}
+              disabled={isAdding}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleAddDevice} disabled={isAdding || !serialNumber.trim()}>
+              {isAdding ? 'Adding...' : 'Add Device'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
