@@ -49,7 +49,7 @@ export default function DeviceSetupInstructions() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Server URL</label>
+              <label className="text-sm font-medium text-gray-700">Server Address / Server URL</label>
               <div className="mt-1 flex gap-2">
                 <code className="flex-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-mono">
                   {serverUrl}
@@ -66,10 +66,13 @@ export default function DeviceSetupInstructions() {
                   )}
                 </Button>
               </div>
+              <p className="mt-1 text-xs text-gray-500">
+                This is the base URL for your ADMS server. Some devices only need this URL and will automatically construct the full endpoint paths.
+              </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Data Push URL</label>
+              <label className="text-sm font-medium text-gray-700">Data Push URL <span className="text-gray-400 font-normal">(if separate field available)</span></label>
               <div className="mt-1 flex gap-2">
                 <code className="flex-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-mono">
                   {dataPushUrl}
@@ -87,12 +90,12 @@ export default function DeviceSetupInstructions() {
                 </Button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Endpoint where devices send attendance logs and data
+                Endpoint where devices send attendance logs and data. Only needed if your device has a separate field for this.
               </p>
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Command Poll URL</label>
+              <label className="text-sm font-medium text-gray-700">Command Poll URL <span className="text-gray-400 font-normal">(if separate field available)</span></label>
               <div className="mt-1 flex gap-2">
                 <code className="flex-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-mono">
                   {commandPollUrl}
@@ -110,7 +113,7 @@ export default function DeviceSetupInstructions() {
                 </Button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Endpoint where devices poll for pending commands
+                Endpoint where devices poll for pending commands. Only needed if your device has a separate field for this.
               </p>
             </div>
           </CardContent>
@@ -129,38 +132,50 @@ export default function DeviceSetupInstructions() {
               <li className="space-y-2">
                 <p className="font-medium">Access Device Menu</p>
                 <p className="text-sm text-gray-600">
-                  On your eSSL Biomatrix device, navigate to: <strong>Menu → Communication → ADMS</strong>
+                  On your eSSL Biomatrix device, navigate to: <strong>Menu → Communication → ADMS</strong> or <strong>Menu → Cloud Server Setting</strong>
                 </p>
               </li>
               <li className="space-y-2">
-                <p className="font-medium">Enter Server URL</p>
+                <p className="font-medium">Set Server Mode</p>
                 <p className="text-sm text-gray-600">
-                  Set the <strong>Server URL</strong> to: <code className="bg-gray-100 px-1 rounded">{serverUrl}</code>
+                  Ensure <strong>Server Mode</strong> is set to <strong>ADMS</strong>
                 </p>
               </li>
               <li className="space-y-2">
-                <p className="font-medium">Configure Data Push</p>
+                <p className="font-medium">Enter Server Address</p>
                 <p className="text-sm text-gray-600">
-                  Set <strong>Data Push URL</strong> to: <code className="bg-gray-100 px-1 rounded">{dataPushUrl}</code>
+                  Set the <strong>Server Address</strong> (or <strong>Server URL</strong>) to: 
                 </p>
-                <p className="text-sm text-gray-500">
-                  This is where the device will send attendance logs, user data, and photos.
+                <div className="mt-2 p-3 bg-gray-50 rounded-md">
+                  <code className="text-sm font-mono text-gray-900">{serverUrl}</code>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  <strong>Note:</strong> Some device models only require the base Server Address. The device will automatically use:
+                  <br />• <code className="bg-gray-100 px-1 rounded">{dataPushUrl}</code> for data push
+                  <br />• <code className="bg-gray-100 px-1 rounded">{commandPollUrl}</code> for command polling
                 </p>
               </li>
               <li className="space-y-2">
-                <p className="font-medium">Configure Command Poll</p>
+                <p className="font-medium">Enable Domain Name (if available)</p>
                 <p className="text-sm text-gray-600">
-                  Set <strong>Command Poll URL</strong> to: <code className="bg-gray-100 px-1 rounded">{commandPollUrl}</code>
-                </p>
-                <p className="text-sm text-gray-500">
-                  The device will poll this endpoint every 30 seconds for pending commands.
+                  If your device has an <strong>Enable Domain Name</strong> option, set it to <strong>ON</strong>
                 </p>
               </li>
               <li className="space-y-2">
-                <p className="font-medium">Enable Push Mode</p>
+                <p className="font-medium">Configure Separate URLs (if available)</p>
                 <p className="text-sm text-gray-600">
-                  Enable <strong>Push Mode</strong> or <strong>ADMS Mode</strong> in device settings
+                  If your device has separate fields for Data Push URL and Command Poll URL:
                 </p>
+                <div className="mt-2 space-y-2 ml-4">
+                  <div>
+                    <p className="text-sm font-medium">Data Push URL:</p>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">{dataPushUrl}</code>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Command Poll URL:</p>
+                    <code className="text-xs bg-gray-100 px-2 py-1 rounded">{commandPollUrl}</code>
+                  </div>
+                </div>
               </li>
               <li className="space-y-2">
                 <p className="font-medium">Save and Restart</p>
