@@ -16,6 +16,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Logo from '@/components/logo';
 
 interface SidebarProps {
   className?: string;
@@ -38,7 +39,7 @@ export function Sidebar({ className }: SidebarProps) {
     <>
       {/* Mobile menu button */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">ADMS Server</h1>
+        <Logo showText={true} size="sm" />
         <Button
           variant="ghost"
           size="icon"
@@ -64,7 +65,7 @@ export function Sidebar({ className }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Logo/Brand */}
           <div className="flex items-center justify-between h-16 px-6 border-b border-gray-800 lg:border-b-0">
-            <h1 className="text-xl font-bold">ADMS Server</h1>
+            <Logo showText={true} size="md" className="text-white" />
             <Button
               variant="ghost"
               size="icon"

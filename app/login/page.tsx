@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Logo from '@/components/logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -37,12 +38,13 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            ADMS Server
+        <div className="flex flex-col items-center">
+          <Logo showText={true} size="lg" className="mb-4" />
+          <h2 className="mt-2 text-center text-2xl font-semibold tracking-tight text-gray-900">
+            Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Sign in to your account
+            Access your biometric device management system
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
