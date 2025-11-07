@@ -228,6 +228,44 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
     }
   };
 
+  const handleAddDevice = async () => {
+    if (!serialNumber.trim()) {
+      alert('Please enter a serial number');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const response = await fetch('/api/v1/devices', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serial_number: serialNumber.trim(),
+          name: deviceName.trim() || null,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        alert(result.error || 'Error adding device');
+        return;
+      }
+
+      // Device added successfully
+      setDevices((prev) => [...prev, result.data as Device]);
+      setIsAddDialogOpen(false);
+      setSerialNumber('');
+      setDeviceName('');
+    } catch (error: any) {
+      alert('Error adding device: ' + error.message);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const handleDeleteDevice = async () => {
     if (!deviceToDelete) return;
 
