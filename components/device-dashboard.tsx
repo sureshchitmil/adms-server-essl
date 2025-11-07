@@ -18,9 +18,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Fingerprint, User, Radio, Wifi, WifiOff, Plus, Circle } from 'lucide-react';
+import { Fingerprint, User, Radio, Wifi, WifiOff, Plus, Circle, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface Device {
@@ -46,6 +56,9 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
   const [deviceName, setDeviceName] = useState('');
   const [isAdding, setIsAdding] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deviceToDelete, setDeviceToDelete] = useState<Device | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const supabase = createClient();
 
   // Update current time every second for real-time status updates
@@ -77,6 +90,8 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
             );
           } else if (payload.eventType === 'INSERT') {
             setDevices((prev) => [...prev, payload.new as Device]);
+          } else if (payload.eventType === 'DELETE') {
+            setDevices((prev) => prev.filter((d) => d.id !== payload.old.id));
           }
         }
       )
@@ -213,42 +228,42 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
     }
   };
 
-  const handleAddDevice = async () => {
-    if (!serialNumber.trim()) {
-      alert('Please enter a serial number');
-      return;
-    }
+  const handleDeleteDevice = async () => {
+    if (!deviceToDelete) return;
 
-    setIsAdding(true);
+    setIsDeleting(true);
     try {
       const response = await fetch('/api/v1/devices', {
-        method: 'POST',
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          serial_number: serialNumber.trim(),
-          name: deviceName.trim() || null,
+          device_id: deviceToDelete.id,
         }),
       });
 
       const result = await response.json();
 
       if (!response.ok) {
-        alert(result.error || 'Error adding device');
+        alert(result.error || 'Error deleting device');
         return;
       }
 
-      // Device added successfully
-      setDevices((prev) => [...prev, result.data as Device]);
-      setIsAddDialogOpen(false);
-      setSerialNumber('');
-      setDeviceName('');
+      // Remove device from list
+      setDevices((prev) => prev.filter((d) => d.id !== deviceToDelete.id));
+      setDeleteDialogOpen(false);
+      setDeviceToDelete(null);
     } catch (error: any) {
-      alert('Error adding device: ' + error.message);
+      alert('Error deleting device: ' + error.message);
     } finally {
-      setIsAdding(false);
+      setIsDeleting(false);
     }
+  };
+
+  const openDeleteDialog = (device: Device) => {
+    setDeviceToDelete(device);
+    setDeleteDialogOpen(true);
   };
 
   return (
@@ -402,6 +417,14 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openDeleteDialog(device)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -481,6 +504,38 @@ export default function DeviceDashboard({ initialDevices }: DeviceDashboardProps
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Device Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Device</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{deviceToDelete?.name || deviceToDelete?.serial_number}</strong>?
+              <br />
+              <br />
+              This will:
+              <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                <li>Remove the device from the system</li>
+                <li>Delete all pending commands for this device</li>
+                <li>Keep attendance logs (device reference will be removed)</li>
+              </ul>
+              <br />
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteDevice}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Device'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
